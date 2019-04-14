@@ -11,7 +11,7 @@ import math
 import calib_io as calib
 
 class Encoder():
-    TESTING = True
+    TESTING = False
     TEST_WRITE = False
     step_count = ()
     LENCODER = 17
@@ -33,9 +33,8 @@ class Encoder():
 
     def __init__(self):
         self.step_count = (0,0)
-        self.steps_to_move = (-1, -1)
         # Attach the Ctrl+C signal interrupt
-        signal.signal(signal.SIGINT, self.ctrlC_sig)
+        signal.signal(signal.SIGINT, self.ctrlC)
 
         # Set the pin numbering scheme to the numbering shown on the robot itself.
         GPIO.setmode(GPIO.BCM)
@@ -66,9 +65,6 @@ class Encoder():
         # Record the time when the encoders are ticked
         self.prev_tick_time[0] = self.last_tick_time[0]
         self.last_tick_time[0] = time.monotonic()
-        if self.step_count[0] == self.steps_to_move[0]:
-            self.steps_to_move = [-1, -1]
-            self.stop()
 
     # This function is called when the right encoder detects a rising edge signal.
     def onRightEncode(self, pin):
@@ -77,25 +73,16 @@ class Encoder():
         self.step_count = (self.step_count[0], self.step_count[1]+1)
         self.prev_tick_time[1] = self.last_tick_time[1]
         self.last_tick_time[1] = time.monotonic()
-        if self.step_count[1] == self.steps_to_move[1]:
-            self.steps_to_move = [-1, -1]
-            self.stop()
 
     # Just stops the robot
     def stop(self):
         self.pwm.set_pwm(self.RSERVO, 0, 0)
         self.pwm.set_pwm(self.LSERVO, 0, 0)
-#        exit()
 
     # This function is called when Ctrl+C is pressed.
     # It's intended for properly exiting the program.
-    def ctrlC(self):
-        print("Exiting encoder class")
-        self.stop()
-        GPIO.cleanup()
-        
-    def ctrlC_sig(self, signum, frame):
-        print("SIGINT")
+    def ctrlC(self, signum, frame):
+        print("Exiting")
         self.stop()
         GPIO.cleanup()
         exit()
@@ -176,7 +163,7 @@ class Encoder():
                 calib.set_calib(speeds)
             self.calibrated_speeds = speeds
         #For TESTING
-        # print(self.calibrated_speeds)
+        print(self.calibrated_speeds)
 
 
     def setSpeedsRPS(self, L, R):
@@ -284,14 +271,14 @@ if __name__ == "__main__":
         d.calibrateSpeeds()
         print(d.calibrated_speeds)
 
-##        time.sleep(5)
-##        print("set speed")
-##        test = .357
-##        print("testing RPS: {test}".format(test = test))
-##        d.setSpeedsRPS(test, test)
-##        time.sleep(3)
-##        d.stop()
-##        time.sleep(2)
+        time.sleep(5)
+        print("set speed")
+        test = .357
+        print("testing RPS: {test}".format(test = test))
+        d.setSpeedsRPS(test, test)
+        time.sleep(3)
+        d.stop()
+        time.sleep(2)
 
         # time.sleep(5)
         # print("set speed")
